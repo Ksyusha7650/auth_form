@@ -1,3 +1,4 @@
+import pytz
 from passlib.context import CryptContext
 import os
 from datetime import datetime, timedelta
@@ -6,7 +7,7 @@ from jose import jwt
 from config import Config
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 30 minutes
+ACCESS_TOKEN_EXPIRE_MINUTES = 3  # 30 minutes
 REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 ALGORITHM = "HS256"
 JWT_SECRET_KEY = Config.JWT_SECRET_KEY  # should be kept secret
@@ -22,10 +23,12 @@ def verify_password(password: str, hashed_pass: str) -> bool:
 
 
 def create_access_token(subject: Union[str, Any], expires_delta: int = None) -> str:
+    current_time_utc = datetime.now(pytz.utc)
+    time_utc3 = current_time_utc.astimezone(pytz.timezone('Europe/Moscow'))
     if expires_delta is not None:
-        expires_delta = datetime.utcnow() + expires_delta
+        expires_delta = time_utc3 + expires_delta
     else:
-        expires_delta = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta = time_utc3 + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode = {"exp": expires_delta, "sub": str(subject)}
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, ALGORITHM)

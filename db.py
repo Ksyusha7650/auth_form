@@ -1,6 +1,13 @@
+from datetime import datetime
+
+import pytz
+from fastapi import Depends
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
+
+from Database.models import User
+from Database.request_models import UserRequest
+from utils import get_hashed_password
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:123456@localhost/authorization"
 
@@ -14,3 +21,23 @@ def get_db():
         yield db
     except:
         db.close()
+
+
+def get_user(login: str, db: Session = Depends(get_db)):
+    return db.query(User).filter(User.login == login).first()
+
+
+def create_user(details: UserRequest, db: Session = Depends(get_db)):
+    current_time_utc = datetime.now(pytz.utc)
+    time_utc3 = current_time_utc.astimezone(pytz.timezone('Europe/Moscow'))
+    to_create = User(
+        login=details.login,
+        password=get_hashed_password(details.password),
+        date_registration=time_utc3
+    )
+    db.add(to_create)
+    db.commit()
+    return {
+        "success": True,
+        "created_id": to_create.id
+    }

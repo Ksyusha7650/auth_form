@@ -6,6 +6,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = "abrleva08"
     JWT_REFRESH_SECRET_KEY = "refresh_abrleva08"
+    STATIC_URL = 'static/'
 
     @staticmethod
     def init_app(app):
