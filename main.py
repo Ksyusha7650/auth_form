@@ -60,6 +60,10 @@ async def index(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
 
 
+@app.get("/ping")
+async def ping():
+    return {"pong"}
+
 if __name__ == '__main__':
     import uvicorn
 
