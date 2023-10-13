@@ -16,9 +16,8 @@ WORKDIR .
 
 # pip & requirements
 RUN python3 -m pip install --user --upgrade pip && \
-    python3 -m pip install -r requirements.txt \
+    python3 -m pip install -r requirements.txt
 
-# Configuration
 EXPOSE 8000
 
 # Execute
