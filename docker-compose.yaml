@@ -21,7 +21,7 @@ services:
       - db
       - alembic_migrations
     environment:
-      REAL_DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/authorization"
+      REAL_DATABASE_URL: "postgresql+asyncpg://ksyu7650:04042002Mm!@db:18003/ksyu7650"
       APP_PORT: "8000"
     build:
       context: .

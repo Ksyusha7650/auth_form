@@ -8,8 +8,9 @@ from sqlalchemy.orm import sessionmaker, Session
 from Database.models import User
 from Database.request_models import UserRequest
 from utils import get_hashed_password
+from config import Config
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:123456@localhost/authorization"
+SQLALCHEMY_DATABASE_URL = Config.SQLALCHEMY_DATABASE_URI
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
