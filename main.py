@@ -1,22 +1,20 @@
-import time
+from datetime import datetime
+
+import pytz
 from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import ValidationError
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 
+from Database.request_models import UserRequest
 from config import Config
 from db import get_db, get_user, create_user
-from Database.request_models import UserRequest
-from Database.models import User
-from deps import get_current_user
-from generator import generate_random_string
-from utils import get_hashed_password, create_access_token, create_refresh_token, verify_password
+from utils import create_access_token, create_refresh_token, verify_password
 
 app = FastAPI()
 
@@ -81,14 +79,19 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Неправильный логин или пароль"
         )
+    current_time_utc = datetime.now()
+    time_difference = current_time_utc - user.date_registration
+    if time_difference.days > 270:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Доступ запрещен"
+        )
     create_access_token(user.login)
     create_refresh_token(user.login)
-    return RedirectResponse("/download")
-
-
-@app.get('/me')
-async def get_me(user: User = Depends(get_current_user)):
-    return user
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"detail": "http://diacompanion.ru/download"}
+    )
 
 
 @app.post('/download')
