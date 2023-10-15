@@ -1,32 +1,23 @@
 from datetime import datetime
+
+import pytz
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
-from flask import jsonify, render_template, Flask, request, flash, redirect
-from flask_bootstrap import Bootstrap
 from sqlalchemy.orm import Session
 from starlette import status
-from fastapi.middleware.wsgi import WSGIMiddleware
 from starlette.templating import Jinja2Templates
-from flask_sqlalchemy import SQLAlchemy
+
 from Database.request_models import UserRequest
 from config import Config
 from db import get_db, get_user, create_user
-from forms import LoginForm
 from utils import create_access_token, create_refresh_token, verify_password
 
-
 app = FastAPI()
-flask_app = Flask(__name__)
-flask_app.secret_key = 'f3cfe9ed8fae309f02079dbf'
-# bootstrap = Bootstrap(flask_app)
-flask_app.config.from_object(Config)
-flask_app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
 
-database = SQLAlchemy(app=flask_app)
-app.mount("/register", WSGIMiddleware(flask_app))
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -40,32 +31,38 @@ async def validation_exception_handler(request, exc):
 
 
 @app.exception_handler(Exception)
-async def exception_handler(request_exception: Request, exc: Exception):
+async def exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={"detail": "Перепроверьте подключение к сети"}
     )
 
 
-class UserModel(database.Model):
-    __tablename__ = 'users'
-    id = database.Column(database.Integer, primary_key=True)
-    login = database.Column(database.String(100), unique=True, index=True)
-    password = database.Column(database.String(15), index=True)
-    date_registration = database.Column(database.DateTime)
-
-
-def register(data: UserRequest):
+@app.post('/register')
+async def register(data: UserRequest, db: Session = Depends(get_db)):
     if data.code == Config.INVITATION_CODE:
-        user = UserModel.query.filter_by(login=data.login).first()
+        try:
+            user = get_user(data.login, db)
+        except HTTPException:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Перепроверьте подключение к данным")
         if user is not None:
-            flash("Пользователь с таким логином уже существует!")
-            return False
-        else:
-            return True
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пользователь с таким логином уже существует!"
+            )
+        try:
+            return create_user(data, db)
+        except HTTPException:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Перепроверьте подключение к данным")
     else:
-        flash("Неправильный пригласительный код")
-        return False
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Неправильный пригласительный код"
+        )
 
 
 @app.post('/login')
@@ -93,29 +90,14 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     create_refresh_token(user.login)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content={"detail": "Успех"}
+        content={"detail": "http://diacompanion.ru/download"}
     )
 
 
-# @app.post('/download')
-# @app.get('/download')
-# async def index(request: Request):
-#     return templates.TemplateResponse("home.html", {"request": request})
-
-
-@flask_app.route('/', methods=['GET', 'POST'])
-def index():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = UserRequest(
-            login=form.username.data,
-            password=form.password.data,
-            code=form.invitation_code.data
-        )
-        if register(user):
-            create_user(user, database.session)
-            return render_template('index.html', form=form)
-    return render_template('index.html', form=form)
+@app.post('/download')
+@app.get('/download')
+async def index(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
 
 
 @app.get("/ping")
