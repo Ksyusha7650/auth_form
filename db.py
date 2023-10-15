@@ -1,7 +1,8 @@
 from datetime import datetime
 
 import pytz
-from fastapi import Depends
+from fastapi import Depends, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -38,7 +39,5 @@ def create_user(details: UserRequest, db: Session = Depends(get_db)):
     )
     db.add(to_create)
     db.commit()
-    return {
-        "success": True,
-        "created_id": to_create.id
-    }
+    data = {"detail": "Пользователь успешно зарегистрирован!"}
+    return JSONResponse(content=data, status_code=200)

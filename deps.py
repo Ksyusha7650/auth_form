@@ -27,18 +27,15 @@ async def get_current_user(token: str = Depends(reusable_oauth),
             token, JWT_SECRET_KEY, algorithms=[ALGORITHM]
         )
         token_data = TokenPayload(**payload)
-
         if datetime.fromtimestamp(token_data.exp) < datetime.now():
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Токен просрочен",
-                headers={"WWW-Authenticate": "Bearer"},
+                detail="Слишком много времени прошло после входа. Повторите вход"
             )
     except(jwt.JWTError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Не удалось подтвердить учетные данные",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Не удалось подтвердить учетные данные"
         )
 
     user = db.get_user(token_data.sub, db_session)
@@ -46,7 +43,7 @@ async def get_current_user(token: str = Depends(reusable_oauth),
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Пользователь не найден",
+            detail="Логин или пароль введен неправильно",
         )
 
     return user

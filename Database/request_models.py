@@ -1,17 +1,11 @@
-from datetime import datetime
 from typing import Any
-
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr
 
 
 class UserRequest(BaseModel):
     login: EmailStr
     password: str
-
-
-class UserPayload(BaseModel):
-    login: str = Field(min_length=3, max_length=127)
-    password: str = Field(min_length=5, max_length=10)
+    invitation_code: str
 
 
 class TokenPayload:
