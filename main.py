@@ -1,22 +1,28 @@
 from datetime import datetime
-
-import pytz
-from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
+from flask import jsonify, render_template, Flask, request, flash
+from flask_bootstrap import Bootstrap
 from sqlalchemy.orm import Session
 from starlette import status
+from fastapi.middleware.wsgi import WSGIMiddleware
 from starlette.templating import Jinja2Templates
 
 from Database.request_models import UserRequest
 from config import Config
 from db import get_db, get_user, create_user
+from forms import LoginForm
 from utils import create_access_token, create_refresh_token, verify_password
 
 app = FastAPI()
+flask_app = Flask(__name__)
+flask_app.secret_key = 'f3cfe9ed8fae309f02079dbf'
+bootstrap = Bootstrap(flask_app)
+
+app.mount("/register", WSGIMiddleware(flask_app))
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -31,38 +37,21 @@ async def validation_exception_handler(request, exc):
 
 
 @app.exception_handler(Exception)
-async def exception_handler(request: Request, exc: Exception):
+async def exception_handler(request_exception: Request, exc: Exception):
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={"detail": "Перепроверьте подключение к сети"}
     )
 
 
-@app.post('/register')
-async def register(data: UserRequest, db: Session = Depends(get_db)):
+def register(data: UserRequest):
     if data.code == Config.INVITATION_CODE:
-        try:
-            user = get_user(data.login, db)
-        except HTTPException:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Перепроверьте подключение к данным")
+        user = get_user(data.login)
         if user is not None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Пользователь с таким логином уже существует!"
-            )
-        try:
-            return create_user(data, db)
-        except HTTPException:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Перепроверьте подключение к данным")
+            flash("Пользователь с таким логином уже существует!")
+        return create_user(data)
     else:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Неправильный пригласительный код"
-        )
+        flash("Неправильный пригласительный код")
 
 
 @app.post('/login')
@@ -98,6 +87,38 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 @app.get('/download')
 async def index(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
+
+
+@flask_app.route('/', methods=['GET', 'POST'])
+def index():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = UserRequest(
+            login=form.username.data,
+            password=form.password.data,
+            code=form.invitation_code.data
+        )
+        return register(user)
+    return render_template('authorization.html', form=form)
+
+# @flask_app.route('/register')
+# def register(login, password):
+#     user = User.query.filter_by(login=login).first()
+#     if user is None and login is not None:
+#         user = User(login=login, password=password, date_registration=datetime.utcnow())
+#         db.session.add(user)
+#         db.session.commit()
+#         flash("Успех!")
+#         status_code = 200
+#         response = jsonify({"status_code": status_code})
+#         response.status_code = status_code
+#         return response
+#     else:
+#         flash("Пользователь с таким логином уже существует")
+#         status_code = 404
+#         response = jsonify({"status_code": status_code})
+#         response.status_code = status_code
+#         return response
 
 
 @app.get("/ping")

@@ -60,12 +60,12 @@
                     <div class="px-2">
                         <div class="container">
                             <input id="csrf_token" name="csrf_token" type="hidden">
-                            <form class='form-signin' method="post" style="width: 100%">
-<!--                                {{ form.hidden_tag() }}-->
-<!--                                {{ wtf.form_field(form.username) }}-->
-<!--                                {{ wtf.form_field(form.password) }}-->
-                                <button name="submit_button" class='btn btn-lg btn-primary btn-block' value="enter" type="submit">Войти</button>
-                                <button name="submit_button" class='btn btn-lg btn-primary btn-block' value="register" type="submit">Зарегистрироваться</button>
+                            <form class='form-signin' method="post"  style="width: 100%">
+                                {{ form.hidden_tag() }}
+                                {{ wtf.form_field(form.username) }}
+                                {{ wtf.form_field(form.password) }}
+                                {{ wtf.form_field(form.invitation_code) }}
+                                <button name="submit_button" class='btn btn-lg btn-primary btn-block' type="submit">Зарегистрироваться</button>
                             </form>
                         </div>
                     </div>

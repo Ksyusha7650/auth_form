@@ -3,6 +3,7 @@ from datetime import datetime
 import pytz
 from fastapi import Depends, Response
 from fastapi.responses import JSONResponse
+from fastapi.responses import RedirectResponse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -39,5 +40,4 @@ def create_user(details: UserRequest, db: Session = Depends(get_db)):
     )
     db.add(to_create)
     db.commit()
-    data = {"detail": "Пользователь успешно зарегистрирован!"}
-    return JSONResponse(content=data, status_code=200)
+    return RedirectResponse("/download")
