@@ -1,11 +1,12 @@
-FROM python:3.6.9
+FROM python:3.9
 
 # system update & package install
 COPY . .
 WORKDIR .
 
 # pip & requirements
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt\
+pip install flask_bootstrap
 
 EXPOSE 8000
 
