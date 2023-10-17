@@ -5,8 +5,8 @@ COPY . .
 WORKDIR .
 
 # pip & requirements
-RUN pip install --no-cache-dir --upgrade -r requirements.txt\
-pip install flask_bootstrap
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install flask_bootstrap
 
 EXPOSE 8000
 
