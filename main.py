@@ -21,7 +21,7 @@ from utils import create_access_token, create_refresh_token, verify_password
 app = FastAPI()
 flask_app = Flask(__name__)
 flask_app.secret_key = 'f3cfe9ed8fae309f02079dbf'
-bootstrap = Bootstrap(flask_app)
+# bootstrap = Bootstrap(flask_app)
 flask_app.config.from_object(Config)
 flask_app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
 
@@ -114,8 +114,8 @@ def index():
         )
         if register(user):
             create_user(user, database.session)
-            return render_template('home.html', form=form)
-    return render_template('authorization.html', form=form)
+            return render_template('index.html', form=form)
+    return render_template('index.html', form=form)
 
 
 @app.get("/ping")
