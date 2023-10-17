@@ -93,7 +93,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     create_refresh_token(user.login)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content={"detail": "http://diacompanion.ru/download"}
+        content={"detail": "Успех"}
     )
 
 
