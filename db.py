@@ -30,6 +30,10 @@ def get_user(login: str, db: Session = Depends(get_db)):
     return db.query(User).filter(User.login == login).first()
 
 
+def get_user_db(login: str):
+    return User.query.filter_by(login=login).first()
+
+
 def create_user(details: UserRequest, db: Session = Depends(get_db)):
     current_time_utc = datetime.now(pytz.utc)
     time_utc3 = current_time_utc.astimezone(pytz.timezone('Europe/Moscow'))
@@ -40,4 +44,4 @@ def create_user(details: UserRequest, db: Session = Depends(get_db)):
     )
     db.add(to_create)
     db.commit()
-    return RedirectResponse("/download")
+

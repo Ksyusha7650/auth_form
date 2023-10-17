@@ -4,26 +4,29 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
-from flask import jsonify, render_template, Flask, request, flash
+from flask import jsonify, render_template, Flask, request, flash, redirect
 from flask_bootstrap import Bootstrap
 from sqlalchemy.orm import Session
 from starlette import status
 from fastapi.middleware.wsgi import WSGIMiddleware
 from starlette.templating import Jinja2Templates
-
+from flask_sqlalchemy import SQLAlchemy
 from Database.request_models import UserRequest
 from config import Config
 from db import get_db, get_user, create_user
 from forms import LoginForm
 from utils import create_access_token, create_refresh_token, verify_password
 
+
 app = FastAPI()
 flask_app = Flask(__name__)
 flask_app.secret_key = 'f3cfe9ed8fae309f02079dbf'
 bootstrap = Bootstrap(flask_app)
+flask_app.config.from_object(Config)
+flask_app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
 
+database = SQLAlchemy(app=flask_app)
 app.mount("/register", WSGIMiddleware(flask_app))
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -44,14 +47,25 @@ async def exception_handler(request_exception: Request, exc: Exception):
     )
 
 
+class UserModel(database.Model):
+    __tablename__ = 'users'
+    id = database.Column(database.Integer, primary_key=True)
+    login = database.Column(database.String(100), unique=True, index=True)
+    password = database.Column(database.String(15), index=True)
+    date_registration = database.Column(database.DateTime)
+
+
 def register(data: UserRequest):
     if data.code == Config.INVITATION_CODE:
-        user = get_user(data.login)
+        user = UserModel.query.filter_by(login=data.login).first()
         if user is not None:
             flash("Пользователь с таким логином уже существует!")
-        return create_user(data)
+            return False
+        else:
+            return True
     else:
         flash("Неправильный пригласительный код")
+        return False
 
 
 @app.post('/login')
@@ -83,10 +97,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     )
 
 
-@app.post('/download')
-@app.get('/download')
-async def index(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+# @app.post('/download')
+# @app.get('/download')
+# async def index(request: Request):
+#     return templates.TemplateResponse("home.html", {"request": request})
 
 
 @flask_app.route('/', methods=['GET', 'POST'])
@@ -98,27 +112,10 @@ def index():
             password=form.password.data,
             code=form.invitation_code.data
         )
-        return register(user)
+        if register(user):
+            create_user(user, database.session)
+            return render_template('home.html', form=form)
     return render_template('authorization.html', form=form)
-
-# @flask_app.route('/register')
-# def register(login, password):
-#     user = User.query.filter_by(login=login).first()
-#     if user is None and login is not None:
-#         user = User(login=login, password=password, date_registration=datetime.utcnow())
-#         db.session.add(user)
-#         db.session.commit()
-#         flash("Успех!")
-#         status_code = 200
-#         response = jsonify({"status_code": status_code})
-#         response.status_code = status_code
-#         return response
-#     else:
-#         flash("Пользователь с таким логином уже существует")
-#         status_code = 404
-#         response = jsonify({"status_code": status_code})
-#         response.status_code = status_code
-#         return response
 
 
 @app.get("/ping")
