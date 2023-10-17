@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr
 class UserRequest(BaseModel):
     login: EmailStr
     password: str
-    code: str
+    invitationCode: str
 
 
 class TokenPayload:

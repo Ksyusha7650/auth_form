@@ -40,7 +40,7 @@ async def exception_handler(request: Request, exc: Exception):
 
 @app.post('/register')
 async def register(data: UserRequest, db: Session = Depends(get_db)):
-    if data.code == Config.INVITATION_CODE:
+    if data.invitation_code == Config.INVITATION_CODE:
         try:
             user = get_user(data.login, db)
         except HTTPException:
