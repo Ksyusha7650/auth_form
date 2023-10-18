@@ -1,4 +1,6 @@
 from datetime import datetime
+
+import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -106,6 +108,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 @flask_app.route('/', methods=['GET', 'POST'])
 def index():
     form = LoginForm()
+    return render_template('home.html', form=form)
     if form.validate_on_submit():
         user = UserRequest(
             login=form.username.data,
@@ -127,3 +130,6 @@ async def ping():
 # while True:
 #     schedule.run_pending()
 #     time.sleep(1)
+
+if __name__ == '__main__':
+    uvicorn.run("")
