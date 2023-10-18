@@ -6,7 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
-from flask import jsonify, render_template, Flask, request, flash, redirect
+from flask import jsonify, render_template, Flask, request, flash, redirect, url_for
 from flask_bootstrap import Bootstrap
 from sqlalchemy.orm import Session
 from starlette import status
@@ -116,13 +116,18 @@ def index():
         )
         if register(user):
             create_user(user, database.session)
-            return render_template('home.html', form=form)
+            return redirect(url_for('download'))
     return render_template('authorization.html', form=form)
 
 
 @app.get("/ping")
 async def ping():
     return {"pong"}
+
+
+@flask_app.get("/download")
+async def download():
+    return render_template('home.html')
 
 # schedule.every().days(30).do(generate_random_string(100))
 #
