@@ -108,7 +108,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 @flask_app.route('/', methods=['GET', 'POST'])
 def index():
     form = LoginForm()
-    return render_template('home.html', form=form)
     if form.validate_on_submit():
         user = UserRequest(
             login=form.username.data,
