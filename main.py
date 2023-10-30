@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from flask import jsonify, render_template, Flask, request, flash, redirect, url_for
 from flask_bootstrap import Bootstrap
+from pip._internal.cli.cmdoptions import python
 from sqlalchemy.orm import Session
 from starlette import status
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -19,7 +20,7 @@ from config import Config
 from db import get_db, get_user, create_user
 from forms import LoginForm
 from utils import create_access_token, create_refresh_token, verify_password
-
+from docx import Document
 
 app = FastAPI()
 flask_app = Flask(__name__)
@@ -127,13 +128,17 @@ async def ping():
 
 
 @app.get("/document_user_agreement")
-async def document():
-    return FileResponse('static/Пользовательское_соглашение_ДиаКомпаньон.docx')
+async def document(request: Request):
+    doc = Document("static/Пользовательское_соглашение_ДиаКомпаньон.docx")
+    content = "\n".join([p.text for p in doc.paragraphs])
+    return templates.TemplateResponse("document_user.html", {"request": request, "content": content})
 
 
 @app.get("/document_policy_confidentiality")
-async def document():
-    return FileResponse('static/Политика конфиденциальности.docx')
+async def document(request: Request):
+    doc = Document("static/Политика конфиденциальности.docx")
+    content = "\n".join([p.text for p in doc.paragraphs])
+    return templates.TemplateResponse("document_user.html", {"request": request, "content": content})
 
 
 @flask_app.get("/download")
