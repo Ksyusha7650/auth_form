@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import uvicorn
+from docx import Document
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -20,7 +21,6 @@ from config import Config
 from db import get_db, get_user, create_user
 from forms import LoginForm
 from utils import create_access_token, create_refresh_token, verify_password
-from docx import Document
 
 app = FastAPI()
 flask_app = Flask(__name__)
@@ -129,7 +129,7 @@ async def ping():
 
 @app.get("/document_user_agreement")
 async def document(request: Request):
-    doc = Document("static/Пользовательское_соглашение_ДиаКомпаньон.docx")
+    doc = Document("static/Пользовательское_соглашение_DiaCompanion_Pro.docx")
     content = "\n".join([p.text for p in doc.paragraphs])
     return templates.TemplateResponse("document_user.html", {"request": request, "content": content})
 
