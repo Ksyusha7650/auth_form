@@ -131,14 +131,22 @@ async def ping():
 async def document(request: Request):
     doc = Document("static/Пользовательское_соглашение_DiaCompanion_Pro.docx")
     content = "\n".join([p.text for p in doc.paragraphs])
-    return templates.TemplateResponse("document_user.html", {"request": request, "content": content})
+    title_content = content.split('\n', 1)
+    return templates.TemplateResponse("document_user.html",
+                                      {"request": request,
+                                       "title": title_content[0],
+                                       "content": title_content[1]})
 
 
 @app.get("/document_policy_confidentiality")
 async def document(request: Request):
     doc = Document("static/Политика конфиденциальности.docx")
     content = "\n".join([p.text for p in doc.paragraphs])
-    return templates.TemplateResponse("document_user.html", {"request": request, "content": content})
+    title_content = content.split('\n', 1)
+    return templates.TemplateResponse("document_user.html",
+                                      {"request": request,
+                                       "title": title_content[0],
+                                       "content": title_content[1]})
 
 
 @flask_app.get("/download")
