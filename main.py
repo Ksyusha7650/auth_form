@@ -11,6 +11,7 @@ from flask_bootstrap import Bootstrap
 from sqlalchemy.orm import Session
 from starlette import status
 from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.responses import FileResponse
 from starlette.templating import Jinja2Templates
 from flask_sqlalchemy import SQLAlchemy
 from Database.request_models import UserRequest
@@ -123,6 +124,16 @@ def index():
 @app.get("/ping")
 async def ping():
     return {"pong"}
+
+
+@app.get("/document_user_agreement")
+async def document():
+    return FileResponse('static/Пользовательское_соглашение_ДиаКомпаньон.docx')
+
+
+@app.get("/document_policy_confidentiality")
+async def document():
+    return FileResponse('static/Политика конфиденциальности.docx')
 
 
 @flask_app.get("/download")
